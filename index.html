@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Memento</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#fdf6e3">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&display=swap" rel="stylesheet">
+
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; }
+        
+        body {
+            background-color: #fdf6e3; 
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        /* Bottone Aggiungi Fluttuante */
+        #addFab {
+            position: fixed; bottom: 30px; right: 30px;
+            width: 60px; height: 60px; border-radius: 30px;
+            background-color: #8b7355; color: white;
+            font-size: 2.5rem; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            cursor: pointer; z-index: 100; display: flex; justify-content: center; align-items: center;
+            line-height: 1;
+        }
+        
+        /* Nascondiamo l'input file vero e proprio */
+        #hiddenFileInput { display: none; }
+
+        #albumContainer { padding: 15px; }
+        
+        .album-page {
+            background-color: #fffaf0;
+            min-height: 70vh;
+            margin-bottom: 40px;
+            border-radius: 4px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            padding: 15px 15px 40px 15px;
+            position: relative;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            align-items: start;
+        }
+
+        .page-number {
+            position: absolute; bottom: 12px; width: 100%; left: 0;
+            text-align: center; font-size: 0.85rem; color: #a9a9a9; font-weight: bold;
+        }
+
+        .photo-frame {
+            background: white;
+            padding: 8px 8px 25px 8px;
+            box-shadow: 2px 2px 8px rgba(0,0,0,0.15);
+            border-radius: 2px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .photo-frame img {
+            width: 100%; height: auto; object-fit: contain;
+            border-radius: 1px; display: block;
+        }
+
+        /* Modale Upload */
+        #uploadModal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 200; justify-content: center; align-items: center;
+        }
+        .modal-content {
+            background: #fff; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px;
+            text-align: center;
+        }
+        .modal-content input, .modal-content button {
+            width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 6px;
+        }
+        .modal-content button { background: #8b7355; color: white; font-weight: bold; border: none; font-size: 1.1rem; }
+        .modal-content .close-btn { background: #eee; color: #333; margin-bottom: 0;}
+        
+        #uploadPreview {
+            width: 100px; height: 100px; object-fit: cover; border-radius: 8px; margin: 10px auto; display: block;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        /* Lightbox & Effetto 3D */
+        #lightbox {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); z-index: 300; justify-content: center; align-items: center;
+            perspective: 1000px; 
+        }
+        
+        #closeLightbox {
+            position: absolute; top: 20px; right: 20px; color: white; font-size: 2.5rem;
+            background: none; border: none; cursor: pointer; z-index: 310; padding: 10px;
+        }
+
+        .flip-container {
+            width: 90%; max-width: 500px; height: 80vh;
+            position: relative; transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        
+        .flip-container.flipped { transform: rotateY(180deg); }
+
+        .front, .back {
+            width: 100%; height: 100%; position: absolute; top: 0; left: 0;
+            backface-visibility: hidden; border-radius: 4px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .front {
+            background: white; padding: 10px; display: flex; flex-direction: column;
+        }
+        .front img { width: 100%; height: 100%; object-fit: contain; }
+
+        .back {
+            background: #fcfcfc; color: #333; transform: rotateY(180deg);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            padding: 30px; text-align: center;
+        }
+        
+        /* Contenuti del retro della foto */
+        .back-display { display: flex; flex-direction: column; align-items: center; width: 100%; }
+        .back-edit { display: none; flex-direction: column; width: 100%; }
+        
+        .back-date { font-size: 2.5rem; margin-bottom: 20px; font-family: 'Caveat', cursive; }
+        .back-place { font-size: 2rem; color: #555; font-family: 'Caveat', cursive;}
+        
+        .swipe-hint {
+            position: absolute; bottom: 20px; width: 100%; text-align: center;
+            color: #999; font-size: 1rem; font-family: sans-serif; background: rgba(255,255,255,0.8);
+            padding: 10px 0; left: 0;
+        }
+
+        /* Controlli Retro Foto (Modifica/Elimina) */
+        .back-controls {
+            position: absolute; bottom: 20px; width: 100%; display: flex; justify-content: space-around;
+        }
+        .back-controls button {
+            background: none; border: none; font-size: 1rem; color: #888; font-weight: bold; cursor: pointer; padding: 10px;
+        }
+        .back-controls button.delete { color: #d32f2f; }
+        
+        /* Form modifica dentro la foto */
+        .back-edit input {
+            width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; text-align: center; font-family: sans-serif;
+        }
+        .back-edit button {
+            width: 100%; padding: 12px; background: #8b7355; color: white; border: none; border-radius: 4px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-top: 10px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <input type="file" id="hiddenFileInput" accept="image/*" multiple>
+    <button id="addFab">+</button>
+
+    <div id="albumContainer"></div>
+
+    <div id="uploadModal">
+        <div class="modal-content">
+            <h3 id="uploadTitle" style="margin-bottom: 5px; color: #8b7355;">Aggiungi Ricordo</h3>
+            <div id="uploadProgress" style="font-size: 0.9rem; color: #666; margin-bottom: 15px;"></div>
+            
+            <img id="uploadPreview" src="" alt="Anteprima">
+            
+            <input type="number" id="yearInput" placeholder="Anno (Es. 2023)" required>
+            <div style="display: flex; gap: 10px;">
+                <input type="number" id="monthInput" placeholder="Mese (1-12)" min="1" max="12">
+                <input type="number" id="dayInput" placeholder="Giorno (1-31)" min="1" max="31">
+            </div>
+            <input type="text" id="placeInput" placeholder="Luogo (Opzionale)">
+            <button id="saveBtn">Salva</button>
+            <button class="close-btn" id="closeModalBtn">Annulla Tutto</button>
+        </div>
+    </div>
+
+    <div id="lightbox">
+        <button id="closeLightbox">×</button>
+        <div class="flip-container" id="flipContainer">
+            <div class="front">
+                <img id="lightboxImg" src="">
+                <div class="swipe-hint">↔ Swipa per girare</div>
+            </div>
+            <div class="back">
+                <div class="back-display" id="backDisplay">
+                    <div class="back-date" id="lightboxDate"></div>
+                    <div class="back-place" id="lightboxPlace"></div>
+                    <div class="back-controls">
+                        <button class="delete" onclick="deleteCurrentPhoto()">Elimina</button>
+                        <button onclick="toggleEditMode(true)">Modifica</button>
+                    </div>
+                </div>
+                
+                <div class="back-edit" id="backEdit">
+                    <h3 style="margin-bottom:15px; color:#8b7355; font-family:sans-serif;">Modifica Dati</h3>
+                    <input type="number" id="editYear" placeholder="Anno" required>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="number" id="editMonth" placeholder="Mese" min="1" max="12">
+                        <input type="number" id="editDay" placeholder="Giorno" min="1" max="31">
+                    </div>
+                    <input type="text" id="editPlace" placeholder="Luogo">
+                    <button onclick="saveEdit()">Salva Modifiche</button>
+                    <button style="background:#ccc; color:#333;" onclick="toggleEditMode(false)">Annulla</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DATABASE INIT ---
+        let db;
+        const request = indexedDB.open("MementoDB", 2); // Versione 2 per supportare i nuovi campi
+
+        request.onupgradeneeded = (event) => {
+            db = event.target.result;
+            if (!db.objectStoreNames.contains("photos")) {
+                db.createObjectStore("photos", { keyPath: "id" });
+            }
+        };
+
+        request.onsuccess = (event) => {
+            db = event.target.result;
+            loadAlbum(); 
+        };
+
+        // --- GESTIONE CODA DI CARICAMENTO ---
+        let pendingFiles = [];
+        let currentUploadIndex = 0;
+        let compressedImagesCache = []; // Per velocizzare il salvataggio
+
+        const hiddenFileInput = document.getElementById('hiddenFileInput');
+        const uploadModal = document.getElementById('uploadModal');
+        const uploadProgress = document.getElementById('uploadProgress');
+        const uploadPreview = document.getElementById('uploadPreview');
+
+        document.getElementById('addFab').onclick = () => { hiddenFileInput.click(); };
+        
+        hiddenFileInput.onchange = async (e) => {
+            pendingFiles = Array.from(e.target.files);
+            if (pendingFiles.length > 0) {
+                currentUploadIndex = 0;
+                compressedImagesCache = [];
+                showNextUpload();
+            }
+        };
+
+        function showNextUpload() {
+            if (currentUploadIndex >= pendingFiles.length) {
+                uploadModal.style.display = 'none';
+                hiddenFileInput.value = ''; // Reset input
+                loadAlbum();
+                return;
+            }
+
+            uploadProgress.innerText = `Foto ${currentUploadIndex + 1} di ${pendingFiles.length}`;
+            const file = pendingFiles[currentUploadIndex];
+            uploadPreview.src = URL.createObjectURL(file);
+            
+            clearUploadForm();
+            uploadModal.style.display = 'flex';
+        }
+
+        document.getElementById('closeModalBtn').onclick = () => {
+            uploadModal.style.display = 'none';
+            pendingFiles = [];
+            hiddenFileInput.value = '';
+        }
+
+        document.getElementById('saveBtn').onclick = async () => {
+            const year = document.getElementById('yearInput').value;
+            const month = document.getElementById('monthInput').value || "";
+            const day = document.getElementById('dayInput').value || "";
+            const place = document.getElementById('placeInput').value;
+
+            if (!year) {
+                alert("L'anno è obbligatorio.");
+                return;
+            }
+
+            const file = pendingFiles[currentUploadIndex];
+            // Disabilita tasto mentre comprime
+            document.getElementById('saveBtn').disabled = true;
+            document.getElementById('saveBtn').innerText = "Salvataggio...";
+
+            const base64Image = await compressImage(file);
+            
+            // Calcolo data ordinamento
+            const sortMonth = month ? month.padStart(2, '0') : "01";
+            const sortDay = day ? day.padStart(2, '0') : "01";
+            const sortDate = new Date(`${year}-${sortMonth}-${sortDay}`).getTime();
+
+            const newPhoto = {
+                id: Date.now() + currentUploadIndex, // ID Univoco
+                sortDate: sortDate,
+                image: base64Image,
+                year: year,
+                month: month,
+                day: day,
+                place: place
+            };
+
+            const transaction = db.transaction(["photos"], "readwrite");
+            transaction.objectStore("photos").add(newPhoto);
+
+            transaction.oncomplete = () => {
+                document.getElementById('saveBtn').disabled = false;
+                document.getElementById('saveBtn').innerText = "Salva";
+                currentUploadIndex++;
+                showNextUpload(); // Passa alla prossima foto in coda
+            };
+        };
+
+        function clearUploadForm() {
+            document.getElementById('yearInput').value = '';
+            document.getElementById('monthInput').value = '';
+            document.getElementById('dayInput').value = '';
+            document.getElementById('placeInput').value = '';
+        }
+
+        function compressImage(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const MAX_WIDTH = 1000;
+                        const scaleSize = MAX_WIDTH / img.width;
+                        canvas.width = MAX_WIDTH;
+                        canvas.height = img.height * scaleSize;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        resolve(canvas.toDataURL('image/jpeg', 0.8)); 
+                    };
+                };
+            });
+        }
+
+        // --- RENDER DELL'ALBUM ---
+        function loadAlbum() {
+            const transaction = db.transaction(["photos"], "readonly");
+            const request = transaction.objectStore("photos").getAll();
+
+            request.onsuccess = (event) => {
+                const photos = event.target.result;
+                photos.sort((a, b) => a.sortDate - b.sortDate);
+                renderPages(photos);
+            };
+        }
+
+        function formatDisplayDate(p) {
+            if (p.month && p.day) return `${p.day}/${p.month}/${p.year}`;
+            return p.year;
+        }
+
+        function renderPages(photos) {
+            const container = document.getElementById('albumContainer');
+            container.innerHTML = '';
+            
+            const PHOTOS_PER_PAGE = 4; 
+            
+            for (let i = 0; i < photos.length; i += PHOTOS_PER_PAGE) {
+                const pagePhotos = photos.slice(i, i + PHOTOS_PER_PAGE);
+                
+                const pageDiv = document.createElement('div');
+                pageDiv.className = 'album-page';
+                
+                pagePhotos.forEach(photo => {
+                    const frameDiv = document.createElement('div');
+                    frameDiv.className = 'photo-frame';
+                    frameDiv.onclick = () => openLightbox(photo);
+
+                    const img = document.createElement('img');
+                    img.src = photo.image;
+                    
+                    frameDiv.appendChild(img);
+                    pageDiv.appendChild(frameDiv);
+                });
+
+                const pageNum = document.createElement('div');
+                pageNum.className = 'page-number';
+                pageNum.innerText = `- ${Math.floor(i / PHOTOS_PER_PAGE) + 1} -`;
+                pageDiv.appendChild(pageNum);
+
+                container.appendChild(pageDiv);
+            }
+        }
+
+        // --- GESTIONE LIGHTBOX (Visualizzazione, Eliminazione, Modifica) ---
+        const lightbox = document.getElementById('lightbox');
+        const flipContainer = document.getElementById('flipContainer');
+        let currentActivePhoto = null; // Memorizza la foto aperta
+
+        function openLightbox(photo) {
+            currentActivePhoto = photo;
+            
+            document.getElementById('lightboxImg').src = photo.image;
+            document.getElementById('lightboxDate').innerText = formatDisplayDate(photo);
+            document.getElementById('lightboxPlace').innerText = photo.place || '';
+            
+            toggleEditMode(false); // Assicurati di non essere in modalità modifica
+            flipContainer.classList.remove('flipped');
+            lightbox.style.display = 'flex';
+        }
+
+        document.getElementById('closeLightbox').onclick = () => { lightbox.style.display = 'none'; };
+
+        // Swipe handler
+        let touchstartX = 0;
+        let touchendX = 0;
+
+        flipContainer.addEventListener('touchstart', e => { touchstartX = e.changedTouches[0].screenX; });
+        flipContainer.addEventListener('touchend', e => {
+            touchendX = e.changedTouches[0].screenX;
+            // Evita di girare la foto se stai scorrendo tra gli input di testo nella modalità modifica
+            if (e.target.tagName !== 'INPUT' && Math.abs(touchendX - touchstartX) > 40) {
+                flipContainer.classList.toggle('flipped');
+            }
+        });
+
+        // Elimina Foto
+        function deleteCurrentPhoto() {
+            if(confirm("Sei sicuro di voler eliminare questo ricordo?")) {
+                const transaction = db.transaction(["photos"], "readwrite");
+                transaction.objectStore("photos").delete(currentActivePhoto.id);
+                transaction.oncomplete = () => {
+                    lightbox.style.display = 'none';
+                    loadAlbum();
+                };
+            }
+        }
+
+        // Modifica Dati Foto
+        function toggleEditMode(isEditing) {
+            if (isEditing) {
+                document.getElementById('backDisplay').style.display = 'none';
+                document.getElementById('backEdit').style.display = 'flex';
+                
+                // Pre-compila campi
+                document.getElementById('editYear').value = currentActivePhoto.year || '';
+                document.getElementById('editMonth').value = currentActivePhoto.month || '';
+                document.getElementById('editDay').value = currentActivePhoto.day || '';
+                document.getElementById('editPlace').value = currentActivePhoto.place || '';
+            } else {
+                document.getElementById('backDisplay').style.display = 'flex';
+                document.getElementById('backEdit').style.display = 'none';
+            }
+        }
+
+        function saveEdit() {
+            const newYear = document.getElementById('editYear').value;
+            const newMonth = document.getElementById('editMonth').value || "";
+            const newDay = document.getElementById('editDay').value || "";
+            const newPlace = document.getElementById('editPlace').value;
+
+            if (!newYear) { alert("L'anno è obbligatorio."); return; }
+
+            const sortMonth = newMonth ? newMonth.padStart(2, '0') : "01";
+            const sortDay = newDay ? newDay.padStart(2, '0') : "01";
+            
+            // Aggiorna oggetto
+            currentActivePhoto.year = newYear;
+            currentActivePhoto.month = newMonth;
+            currentActivePhoto.day = newDay;
+            currentActivePhoto.place = newPlace;
+            currentActivePhoto.sortDate = new Date(`${newYear}-${sortMonth}-${sortDay}`).getTime();
+
+            const transaction = db.transaction(["photos"], "readwrite");
+            transaction.objectStore("photos").put(currentActivePhoto);
+
+            transaction.oncomplete = () => {
+                // Aggiorna UI del retro
+                document.getElementById('lightboxDate').innerText = formatDisplayDate(currentActivePhoto);
+                document.getElementById('lightboxPlace').innerText = currentActivePhoto.place || '';
+                toggleEditMode(false);
+                loadAlbum(); // Ricarica sfondo nel caso sia cambiato l'ordine
+            };
+        }
+    </script>
+</body>
+</html>
