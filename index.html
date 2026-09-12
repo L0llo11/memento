@@ -10,6 +10,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     
     <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; }
@@ -18,82 +19,216 @@
             background-color: #fdf6e3; 
             color: #333;
             overflow-x: hidden;
+            transition: background-color 0.3s;
+        }
+
+        header {
+            padding: 20px;
+            text-align: center;
+            background: #fffaf0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            font-family: 'Caveat', cursive;
+            color: #8b7355;
+            font-size: 2rem;
+            margin: 0;
+            flex-grow: 1;
+            text-align: center;
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #8b7355;
+            cursor: pointer;
+            visibility: hidden;
+        }
+
+        /* Dashboard (Menu Principale) */
+        #dashboard {
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 20px;
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+
+        .album-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            cursor: pointer;
+            position: relative;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .album-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+
+        .album-icon {
+            font-size: 3rem;
+            color: #d4c4b7;
+            margin-bottom: 10px;
+        }
+
+        .album-title {
+            font-weight: bold;
+            color: #555;
+            font-size: 1.1rem;
+        }
+
+        .album-actions {
+            margin-top: 15px;
+            display: flex;
+            justify-content: space-around;
+        }
+
+        .album-actions button {
+            background: none;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 5px;
+        }
+
+        .album-actions button:hover {
+            color: #8b7355;
+        }
+
+        /* Vista Album Interno */
+        #albumView {
+            display: none;
+            opacity: 0;
+            transform: translateX(20px);
+            transition: opacity 0.4s ease, transform 0.4s ease;
         }
 
         /* Bottone Aggiungi Fluttuante */
-        #addFab {
+        .fab {
             position: fixed; bottom: 30px; right: 30px;
             width: 60px; height: 60px; border-radius: 30px;
             background-color: #8b7355; color: white;
-            font-size: 2.5rem; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            font-size: 1.5rem; border: none; box-shadow: 0 4px 15px rgba(139, 115, 85, 0.4);
             cursor: pointer; z-index: 100; display: flex; justify-content: center; align-items: center;
-            line-height: 1;
+            transition: transform 0.2s;
         }
         
-        /* Nascondiamo l'input file vero e proprio */
-        #hiddenFileInput { display: none; }
+        .fab:hover {
+            transform: scale(1.05);
+        }
 
+        #hiddenFileInput { display: none; }
         #albumContainer { padding: 15px; }
         
         .album-page {
             background-color: #fffaf0;
-            min-height: 70vh;
             margin-bottom: 40px;
-            border-radius: 4px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-            padding: 15px 15px 40px 15px;
+            border-radius: 8px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            padding: 20px 20px 50px 20px;
             position: relative;
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            align-items: start;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 20px;
         }
 
         .page-number {
-            position: absolute; bottom: 12px; width: 100%; left: 0;
-            text-align: center; font-size: 0.85rem; color: #a9a9a9; font-weight: bold;
+            position: absolute; bottom: 15px; width: 100%; left: 0;
+            text-align: center; font-size: 0.9rem; color: #a9a9a9; font-weight: bold;
         }
 
         .photo-frame {
             background: white;
-            padding: 8px 8px 25px 8px;
-            box-shadow: 2px 2px 8px rgba(0,0,0,0.15);
+            padding: 10px 10px 45px 10px;
+            box-shadow: 2px 4px 12px rgba(0,0,0,0.1);
             border-radius: 2px;
             cursor: pointer;
             display: flex;
             flex-direction: column;
+            transition: transform 0.2s;
+            position: relative;
+        }
+
+        .photo-frame:hover {
+            transform: scale(1.02) rotate(-1deg);
+            box-shadow: 4px 8px 15px rgba(0,0,0,0.15);
         }
 
         .photo-frame img {
-            width: 100%; height: auto; object-fit: contain;
-            border-radius: 1px; display: block;
+            width: 100%; aspect-ratio: 1; object-fit: cover;
+            border-radius: 2px; display: block;
         }
 
-        /* Modale Upload */
-        #uploadModal {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8); z-index: 200; justify-content: center; align-items: center;
-        }
-        .modal-content {
-            background: #fff; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px;
+        .photo-caption {
             text-align: center;
+            font-family: 'Caveat', cursive;
+            color: #555;
+            font-size: 1.5rem;
+            position: absolute;
+            bottom: 5px;
+            left: 0;
+            width: 100%;
         }
+
+        /* Modali */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); z-index: 200; 
+            justify-content: center; align-items: center;
+            opacity: 0; transition: opacity 0.3s ease;
+        }
+
+        .modal.active {
+            opacity: 1;
+        }
+
+        .modal-content {
+            background: #fff; padding: 30px; border-radius: 16px; width: 90%; max-width: 400px;
+            text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transform: scale(0.9); transition: transform 0.3s ease;
+        }
+
+        .modal.active .modal-content {
+            transform: scale(1);
+        }
+
         .modal-content input, .modal-content button {
-            width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 6px;
+            width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #e0e0e0; border-radius: 8px;
+            font-size: 1rem;
         }
-        .modal-content button { background: #8b7355; color: white; font-weight: bold; border: none; font-size: 1.1rem; }
-        .modal-content .close-btn { background: #eee; color: #333; margin-bottom: 0;}
+
+        .modal-content input:focus {
+            outline: none; border-color: #8b7355;
+        }
+
+        .modal-content button.primary { background: #8b7355; color: white; font-weight: bold; border: none; }
+        .modal-content button.secondary { background: #f5f5f5; color: #555; border: none; margin-bottom: 0;}
         
         #uploadPreview {
-            width: 100px; height: 100px; object-fit: cover; border-radius: 8px; margin: 10px auto; display: block;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            width: 120px; height: 120px; object-fit: cover; border-radius: 8px; margin: 10px auto 20px; display: block;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
 
         /* Lightbox & Effetto 3D */
         #lightbox {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.95); z-index: 300; justify-content: center; align-items: center;
-            perspective: 1000px; 
+            perspective: 1500px; 
+            opacity: 0; transition: opacity 0.3s;
         }
         
         #closeLightbox {
@@ -102,8 +237,8 @@
         }
 
         .flip-container {
-            width: 90%; max-width: 500px; height: 80vh;
-            position: relative; transition: transform 0.6s;
+            width: 90%; max-width: 500px; height: 80vh; max-height: 800px;
+            position: relative; transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             transform-style: preserve-3d;
         }
         
@@ -111,60 +246,95 @@
 
         .front, .back {
             width: 100%; height: 100%; position: absolute; top: 0; left: 0;
-            backface-visibility: hidden; border-radius: 4px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            backface-visibility: hidden; border-radius: 8px; box-shadow: 0 15px 40px rgba(0,0,0,0.4);
         }
 
         .front {
-            background: white; padding: 10px; display: flex; flex-direction: column;
+            background: white; padding: 15px; display: flex; flex-direction: column;
         }
-        .front img { width: 100%; height: 100%; object-fit: contain; }
+        .front img { width: 100%; height: calc(100% - 40px); object-fit: contain; border-radius: 4px; }
 
         .back {
-            background: #fcfcfc; color: #333; transform: rotateY(180deg);
+            background: #fffaf0; color: #333; transform: rotateY(180deg);
             display: flex; flex-direction: column; justify-content: center; align-items: center;
-            padding: 30px; text-align: center;
+            padding: 40px; text-align: center;
         }
         
-        /* Contenuti del retro della foto */
         .back-display { display: flex; flex-direction: column; align-items: center; width: 100%; }
         .back-edit { display: none; flex-direction: column; width: 100%; }
         
-        .back-date { font-size: 2.5rem; margin-bottom: 20px; font-family: 'Caveat', cursive; }
-        .back-place { font-size: 2rem; color: #555; font-family: 'Caveat', cursive;}
+        .back-date { font-size: 3rem; margin-bottom: 15px; font-family: 'Caveat', cursive; color: #8b7355; }
+        .back-place { font-size: 2rem; color: #666; font-family: 'Caveat', cursive;}
         
         .swipe-hint {
-            position: absolute; bottom: 20px; width: 100%; text-align: center;
-            color: #999; font-size: 1rem; font-family: sans-serif; background: rgba(255,255,255,0.8);
-            padding: 10px 0; left: 0;
+            position: absolute; bottom: 25px; width: 100%; text-align: center;
+            color: #aaa; font-size: 0.9rem; font-family: sans-serif; background: rgba(255,255,255,0.9);
+            padding: 10px 0; left: 0; border-radius: 0 0 8px 8px;
         }
 
-        /* Controlli Retro Foto (Modifica/Elimina) */
         .back-controls {
-            position: absolute; bottom: 20px; width: 100%; display: flex; justify-content: space-around;
+            position: absolute; bottom: 30px; width: 100%; display: flex; justify-content: space-evenly;
         }
-        .back-controls button {
-            background: none; border: none; font-size: 1rem; color: #888; font-weight: bold; cursor: pointer; padding: 10px;
-        }
-        .back-controls button.delete { color: #d32f2f; }
         
+        .back-controls button {
+            background: white; border: 1px solid #eee; border-radius: 20px; padding: 10px 25px;
+            font-size: 1rem; color: #555; font-weight: bold; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            transition: all 0.2s;
+        }
+        .back-controls button:hover { background: #f5f5f5; }
+        .back-controls button.delete { color: #d32f2f; }
+
         /* Form modifica dentro la foto */
         .back-edit input {
-            width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; text-align: center; font-family: sans-serif;
+            width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; text-align: center;
         }
         .back-edit button {
-            width: 100%; padding: 12px; background: #8b7355; color: white; border: none; border-radius: 4px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-top: 10px;
+            width: 100%; padding: 12px; background: #8b7355; color: white; border: none; border-radius: 6px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-top: 10px;
         }
+        .back-edit button.secondary { background: #e0e0e0; color: #333; }
+
+        #settingsBtn {
+            background: none; border: none; font-size: 1.4rem; color: #8b7355; cursor: pointer;
+            transition: transform 0.3s;
+        }
+        #settingsBtn:hover { transform: rotate(90deg); }
 
     </style>
 </head>
 <body>
+    <header>
+        <button class="back-btn" id="backToDashBtn" onclick="showDashboard()"><i class="fas fa-arrow-left"></i></button>
+        <h1 id="headerTitle">Memento</h1>
+        <button id="settingsBtn" onclick="openModal('settingsModal')"><i class="fas fa-cog"></i></button>
+    </header>
 
-    <input type="file" id="hiddenFileInput" accept="image/*" multiple>
-    <button id="addFab">+</button>
+    <!-- DASHBOARD -->
+    <div id="dashboard">
+        <!-- Generato dinamicamente -->
+    </div>
 
-    <div id="albumContainer"></div>
+    <button class="fab" id="addAlbumBtn" onclick="openAlbumModal()"><i class="fas fa-folder-plus"></i></button>
 
-    <div id="uploadModal">
+    <!-- ALBUM VIEW -->
+    <div id="albumView">
+        <input type="file" id="hiddenFileInput" accept="image/*" multiple>
+        <div id="albumContainer"></div>
+        <button class="fab" id="addPhotoBtn"><i class="fas fa-camera"></i></button>
+    </div>
+
+    <!-- MODAL NUOVO ALBUM -->
+    <div id="albumModal" class="modal">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 20px; color: #8b7355;">Nuovo Album</h3>
+            <input type="text" id="albumNameInput" placeholder="Nome Album (es. Viaggi, Famiglia)" required>
+            <input type="hidden" id="editAlbumId">
+            <button class="primary" onclick="saveAlbum()">Salva</button>
+            <button class="secondary" onclick="closeModal('albumModal')">Annulla</button>
+        </div>
+    </div>
+
+    <!-- MODAL UPLOAD FOTO -->
+    <div id="uploadModal" class="modal">
         <div class="modal-content">
             <h3 id="uploadTitle" style="margin-bottom: 5px; color: #8b7355;">Aggiungi Ricordo</h3>
             <div id="uploadProgress" style="font-size: 0.9rem; color: #666; margin-bottom: 15px;"></div>
@@ -177,11 +347,12 @@
                 <input type="number" id="dayInput" placeholder="Giorno (1-31)" min="1" max="31">
             </div>
             <input type="text" id="placeInput" placeholder="Luogo (Opzionale)">
-            <button id="saveBtn">Salva</button>
-            <button class="close-btn" id="closeModalBtn">Annulla Tutto</button>
+            <button class="primary" id="saveBtn">Salva Foto</button>
+            <button class="secondary" id="closeModalBtn" onclick="closeModal('uploadModal')">Annulla Tutto</button>
         </div>
     </div>
 
+    <!-- LIGHTBOX -->
     <div id="lightbox">
         <button id="closeLightbox">×</button>
         <div class="flip-container" id="flipContainer">
@@ -194,8 +365,8 @@
                     <div class="back-date" id="lightboxDate"></div>
                     <div class="back-place" id="lightboxPlace"></div>
                     <div class="back-controls">
-                        <button class="delete" onclick="deleteCurrentPhoto()">Elimina</button>
-                        <button onclick="toggleEditMode(true)">Modifica</button>
+                        <button class="delete" onclick="deleteCurrentPhoto()"><i class="fas fa-trash"></i></button>
+                        <button onclick="toggleEditMode(true)"><i class="fas fa-edit"></i></button>
                     </div>
                 </div>
                 
@@ -208,55 +379,290 @@
                     </div>
                     <input type="text" id="editPlace" placeholder="Luogo">
                     <button onclick="saveEdit()">Salva Modifiche</button>
-                    <button style="background:#ccc; color:#333;" onclick="toggleEditMode(false)">Annulla</button>
+                    <button class="secondary" onclick="toggleEditMode(false)">Annulla</button>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- IMPOSTAZIONI MODAL -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 20px; color: #8b7355;"><i class="fas fa-cog"></i> Impostazioni</h3>
+            
+            <div style="margin-bottom: 25px; text-align: left;">
+                <h4 style="margin-bottom: 10px; color: #555;">Notifiche Anniversari</h4>
+                <p style="font-size: 0.9rem; color: #777; margin-bottom: 10px;">Ricevi un promemoria ogni anno e ogni 500 giorni da un ricordo speciale.</p>
+                <button class="primary" onclick="requestNotificationPermission()"><i class="fas fa-bell"></i> Attiva Notifiche</button>
+            </div>
+
+            <hr style="border: 0; border-top: 1px solid #eee; margin-bottom: 25px;">
+
+            <div style="margin-bottom: 25px; text-align: center;">
+                <h4 style="margin-bottom: 10px; color: #555;">Condividi Sito</h4>
+                <p style="font-size: 0.9rem; color: #777; margin-bottom: 15px;">Fai inquadrare questo QR Code per aprire l'app su un altro telefono.</p>
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=https://l0llo11.github.io/memento/" alt="QR Code" style="border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 150px; height: 150px; cursor: pointer; transition: all 0.3s ease;" onclick="if(this.style.transform === 'scale(2)') { this.style.transform = 'scale(1)'; this.style.zIndex = '1'; } else { this.style.transform = 'scale(2)'; this.style.position = 'relative'; this.style.zIndex = '10'; }">
+                <p style="font-size: 0.8rem; color: #aaa; margin-top: 10px; word-break: break-all;">https://l0llo11.github.io/memento/</p>
+            </div>
+
+            <button class="secondary" onclick="closeModal('settingsModal')">Chiudi</button>
+        </div>
+    </div>
+
     <script>
-        // --- DATABASE INIT ---
+        // --- REGISTRAZIONE SERVICE WORKER E NOTIFICHE ---
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').then(reg => {
+                console.log('Service Worker registrato con successo.', reg);
+            }).catch(err => {
+                console.error('Errore registrazione Service Worker', err);
+            });
+        }
+
+        function requestNotificationPermission() {
+            if ('Notification' in window) {
+                Notification.requestPermission().then(permission => {
+                    if (permission === 'granted') {
+                        alert("Permessi accordati! Memento ti ricorderà gli anniversari speciali.");
+                        // Invia messaggio al SW per schedulare un check
+                        if (navigator.serviceWorker.controller) {
+                            navigator.serviceWorker.controller.postMessage({action: 'checkAnniversaries'});
+                        }
+                    } else {
+                        alert("Hai negato i permessi. Non riceverai notifiche.");
+                    }
+                });
+            }
+        }
+
+        // --- DATABASE INIT (Upgrade a V3 per Multi-Album e Blob) ---
         let db;
-        const request = indexedDB.open("MementoDB", 2); // Versione 2 per supportare i nuovi campi
+        const request = indexedDB.open("MementoDB", 3);
 
         request.onupgradeneeded = (event) => {
             db = event.target.result;
+            
+            // Creazione Store Album
+            if (!db.objectStoreNames.contains("albums")) {
+                db.createObjectStore("albums", { keyPath: "id" });
+            }
+            
+            // Aggiornamento Store Photos
             if (!db.objectStoreNames.contains("photos")) {
-                db.createObjectStore("photos", { keyPath: "id" });
+                const photoStore = db.createObjectStore("photos", { keyPath: "id" });
+                photoStore.createIndex("albumId", "albumId", { unique: false });
+            } else {
+                // Se esiste, creiamo l'indice per albumId (gestione migrazione vecchi dati)
+                const photoStore = event.target.transaction.objectStore("photos");
+                if (!photoStore.indexNames.contains("albumId")) {
+                    photoStore.createIndex("albumId", "albumId", { unique: false });
+                }
             }
         };
 
         request.onsuccess = (event) => {
             db = event.target.result;
-            loadAlbum(); 
+            checkAndMigrateOldData();
+            loadDashboard(); 
         };
 
-        // --- GESTIONE CODA DI CARICAMENTO ---
+        // Migrazione: assegna un album di default alle foto senza albumId
+        function checkAndMigrateOldData() {
+            const tx = db.transaction(["albums", "photos"], "readwrite");
+            const albumsStore = tx.objectStore("albums");
+            const photosStore = tx.objectStore("photos");
+
+            albumsStore.get('default').onsuccess = (e) => {
+                if (!e.target.result) {
+                    const defaultAlbum = { id: 'default', name: 'Album Principale', createdAt: 0 };
+                    albumsStore.add(defaultAlbum);
+                } else if (e.target.result.name === 'Ricordi Generali') {
+                    const defaultAlbum = e.target.result;
+                    defaultAlbum.name = 'Album Principale';
+                    defaultAlbum.createdAt = 0;
+                    albumsStore.put(defaultAlbum);
+                }
+                
+                photosStore.openCursor().onsuccess = (ePhoto) => {
+                    const cursor = ePhoto.target.result;
+                    if (cursor) {
+                        const photo = cursor.value;
+                        if (!photo.albumId) {
+                            photo.albumId = 'default';
+                            cursor.update(photo);
+                        }
+                        cursor.continue();
+                    }
+                };
+            };
+        }
+
+        // --- STATO APPLICAZIONE ---
+        let currentAlbumId = null;
+
+        // --- GESTIONE UI (Dashboard vs Album) ---
+        function showDashboard() {
+            document.getElementById('dashboard').style.display = 'grid';
+            setTimeout(() => {
+                document.getElementById('dashboard').style.opacity = '1';
+                document.getElementById('dashboard').style.transform = 'translateY(0)';
+            }, 10);
+            
+            document.getElementById('albumView').style.opacity = '0';
+            document.getElementById('albumView').style.transform = 'translateX(20px)';
+            setTimeout(() => { document.getElementById('albumView').style.display = 'none'; }, 400);
+
+            document.getElementById('addAlbumBtn').style.display = 'flex';
+            document.getElementById('backToDashBtn').style.visibility = 'hidden';
+            document.getElementById('headerTitle').innerText = 'Memento';
+            
+            currentAlbumId = null;
+            loadDashboard();
+        }
+
+        function showAlbum(albumId, albumName) {
+            currentAlbumId = albumId;
+            document.getElementById('dashboard').style.opacity = '0';
+            document.getElementById('dashboard').style.transform = 'translateY(-20px)';
+            setTimeout(() => { document.getElementById('dashboard').style.display = 'none'; }, 400);
+
+            document.getElementById('albumView').style.display = 'block';
+            setTimeout(() => {
+                document.getElementById('albumView').style.opacity = '1';
+                document.getElementById('albumView').style.transform = 'translateX(0)';
+            }, 10);
+
+            document.getElementById('addAlbumBtn').style.display = 'none';
+            document.getElementById('backToDashBtn').style.visibility = 'visible';
+            document.getElementById('headerTitle').innerText = albumName;
+            
+            loadPhotosForAlbum(albumId);
+        }
+
+        // --- GESTIONE ALBUM ---
+        function loadDashboard() {
+            const tx = db.transaction("albums", "readonly");
+            const store = tx.objectStore("albums");
+            const request = store.getAll();
+
+            request.onsuccess = (e) => {
+                const albums = e.target.result.sort((a,b) => a.createdAt - b.createdAt);
+                const dash = document.getElementById('dashboard');
+                dash.innerHTML = '';
+
+                albums.forEach(album => {
+                    const card = document.createElement('div');
+                    card.className = 'album-card';
+                    card.onclick = (ev) => {
+                        if(ev.target.tagName !== 'BUTTON' && ev.target.tagName !== 'I') {
+                            showAlbum(album.id, album.name);
+                        }
+                    };
+
+                    let actionsHtml = '';
+                    if (album.id !== 'default') {
+                        actionsHtml = `
+                            <div class="album-actions">
+                                <button onclick="editAlbum('${album.id}', '${album.name.replace(/'/g, "\\'")}')" title="Rinomina"><i class="fas fa-pen"></i></button>
+                                <button onclick="deleteAlbum('${album.id}')" title="Elimina"><i class="fas fa-trash"></i></button>
+                            </div>
+                        `;
+                    }
+
+                    card.innerHTML = `
+                        <div class="album-icon"><i class="fas fa-book-open"></i></div>
+                        <div class="album-title">${album.name}</div>
+                        ${actionsHtml}
+                    `;
+                    dash.appendChild(card);
+                });
+            };
+        }
+
+        function openAlbumModal(id = '', name = '') {
+            document.getElementById('editAlbumId').value = id;
+            document.getElementById('albumNameInput').value = name;
+            openModal('albumModal');
+        }
+
+        function editAlbum(id, name) {
+            openAlbumModal(id, name);
+        }
+
+        function saveAlbum() {
+            const name = document.getElementById('albumNameInput').value.trim();
+            if(!name) return;
+
+            const id = document.getElementById('editAlbumId').value || 'album_' + Date.now();
+            const tx = db.transaction("albums", "readwrite");
+            const store = tx.objectStore("albums");
+            
+            store.put({ id: id, name: name, createdAt: Date.now() });
+            
+            tx.oncomplete = () => {
+                closeModal('albumModal');
+                loadDashboard();
+            };
+        }
+
+        function deleteAlbum(id) {
+            if(confirm("Sei sicuro di voler eliminare questo album e tutte le sue foto?")) {
+                const tx = db.transaction(["albums", "photos"], "readwrite");
+                tx.objectStore("albums").delete(id);
+                
+                // Elimina foto associate
+                const photoStore = tx.objectStore("photos");
+                const index = photoStore.index("albumId");
+                index.openCursor(IDBKeyRange.only(id)).onsuccess = (e) => {
+                    const cursor = e.target.result;
+                    if(cursor) {
+                        cursor.delete();
+                        cursor.continue();
+                    }
+                };
+                
+                tx.oncomplete = () => loadDashboard();
+            }
+        }
+
+        // --- GESTIONE MODALI UTILITY ---
+        function openModal(id) {
+            const modal = document.getElementById(id);
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('active'), 10);
+        }
+        
+        function closeModal(id) {
+            const modal = document.getElementById(id);
+            modal.classList.remove('active');
+            setTimeout(() => {
+                modal.style.display = 'none';
+                if(id === 'uploadModal') { pendingFiles = []; hiddenFileInput.value = ''; }
+            }, 300);
+        }
+
+        // --- GESTIONE CODA DI CARICAMENTO FOTO ---
         let pendingFiles = [];
         let currentUploadIndex = 0;
-        let compressedImagesCache = []; // Per velocizzare il salvataggio
 
         const hiddenFileInput = document.getElementById('hiddenFileInput');
-        const uploadModal = document.getElementById('uploadModal');
         const uploadProgress = document.getElementById('uploadProgress');
         const uploadPreview = document.getElementById('uploadPreview');
 
-        document.getElementById('addFab').onclick = () => { hiddenFileInput.click(); };
+        document.getElementById('addPhotoBtn').onclick = () => { hiddenFileInput.click(); };
         
         hiddenFileInput.onchange = async (e) => {
             pendingFiles = Array.from(e.target.files);
             if (pendingFiles.length > 0) {
                 currentUploadIndex = 0;
-                compressedImagesCache = [];
                 showNextUpload();
             }
         };
 
         function showNextUpload() {
             if (currentUploadIndex >= pendingFiles.length) {
-                uploadModal.style.display = 'none';
-                hiddenFileInput.value = ''; // Reset input
-                loadAlbum();
+                closeModal('uploadModal');
+                loadPhotosForAlbum(currentAlbumId);
                 return;
             }
 
@@ -265,13 +671,7 @@
             uploadPreview.src = URL.createObjectURL(file);
             
             clearUploadForm();
-            uploadModal.style.display = 'flex';
-        }
-
-        document.getElementById('closeModalBtn').onclick = () => {
-            uploadModal.style.display = 'none';
-            pendingFiles = [];
-            hiddenFileInput.value = '';
+            openModal('uploadModal');
         }
 
         document.getElementById('saveBtn').onclick = async () => {
@@ -286,21 +686,22 @@
             }
 
             const file = pendingFiles[currentUploadIndex];
-            // Disabilita tasto mentre comprime
-            document.getElementById('saveBtn').disabled = true;
-            document.getElementById('saveBtn').innerText = "Salvataggio...";
+            const btn = document.getElementById('saveBtn');
+            btn.disabled = true;
+            btn.innerText = "Salvataggio...";
 
-            const base64Image = await compressImage(file);
+            // Ottimizzazione: Salviamo come Blob invece di Base64 per non saturare la memoria
+            const imageBlob = await compressImageToBlob(file);
             
-            // Calcolo data ordinamento
             const sortMonth = month ? month.padStart(2, '0') : "01";
             const sortDay = day ? day.padStart(2, '0') : "01";
             const sortDate = new Date(`${year}-${sortMonth}-${sortDay}`).getTime();
 
             const newPhoto = {
-                id: Date.now() + currentUploadIndex, // ID Univoco
+                id: Date.now() + currentUploadIndex,
+                albumId: currentAlbumId,
                 sortDate: sortDate,
-                image: base64Image,
+                imageBlob: imageBlob, 
                 year: year,
                 month: month,
                 day: day,
@@ -311,10 +712,16 @@
             transaction.objectStore("photos").add(newPhoto);
 
             transaction.oncomplete = () => {
-                document.getElementById('saveBtn').disabled = false;
-                document.getElementById('saveBtn').innerText = "Salva";
+                btn.disabled = false;
+                btn.innerText = "Salva Foto";
+                
+                // Notifica al service worker di ricalcolare gli anniversari
+                if(navigator.serviceWorker.controller) {
+                    navigator.serviceWorker.controller.postMessage({action: 'checkAnniversaries'});
+                }
+
                 currentUploadIndex++;
-                showNextUpload(); // Passa alla prossima foto in coda
+                showNextUpload();
             };
         };
 
@@ -325,7 +732,7 @@
             document.getElementById('placeInput').value = '';
         }
 
-        function compressImage(file) {
+        function compressImageToBlob(file) {
             return new Promise((resolve) => {
                 const reader = new FileReader();
                 reader.readAsDataURL(file);
@@ -334,22 +741,34 @@
                     img.src = event.target.result;
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
-                        const MAX_WIDTH = 1000;
-                        const scaleSize = MAX_WIDTH / img.width;
-                        canvas.width = MAX_WIDTH;
+                        const MAX_WIDTH = 1200; // Leggermente più grande per qualità migliore
+                        const scaleSize = Math.min(1, MAX_WIDTH / img.width);
+                        canvas.width = img.width * scaleSize;
                         canvas.height = img.height * scaleSize;
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        resolve(canvas.toDataURL('image/jpeg', 0.8)); 
+                        
+                        // Esporta come Blob
+                        canvas.toBlob((blob) => {
+                            resolve(blob);
+                        }, 'image/jpeg', 0.85); 
                     };
                 };
             });
         }
 
-        // --- RENDER DELL'ALBUM ---
-        function loadAlbum() {
+        // --- RENDER FOTO DELL'ALBUM ---
+        function loadPhotosForAlbum(albumId) {
+            if(!albumId) return;
             const transaction = db.transaction(["photos"], "readonly");
-            const request = transaction.objectStore("photos").getAll();
+            
+            let request;
+            if (albumId === 'default') {
+                request = transaction.objectStore("photos").getAll();
+            } else {
+                const index = transaction.objectStore("photos").index("albumId");
+                request = index.getAll(albumId);
+            }
 
             request.onsuccess = (event) => {
                 const photos = event.target.result;
@@ -367,6 +786,11 @@
             const container = document.getElementById('albumContainer');
             container.innerHTML = '';
             
+            if(photos.length === 0) {
+                container.innerHTML = "<p style='text-align:center; color:#888; margin-top:50px;'>Non ci sono ancora foto in questo album. Premi la fotocamera per aggiungerne una.</p>";
+                return;
+            }
+
             const PHOTOS_PER_PAGE = 4; 
             
             for (let i = 0; i < photos.length; i += PHOTOS_PER_PAGE) {
@@ -381,9 +805,19 @@
                     frameDiv.onclick = () => openLightbox(photo);
 
                     const img = document.createElement('img');
-                    img.src = photo.image;
+                    // Gestione retrocompatibilità per dati vecchi (base64) e nuovi (Blob)
+                    if(photo.imageBlob) {
+                        img.src = URL.createObjectURL(photo.imageBlob);
+                    } else if(photo.image) {
+                        img.src = photo.image;
+                    }
                     
+                    const caption = document.createElement('div');
+                    caption.className = 'photo-caption';
+                    caption.innerText = photo.year;
+
                     frameDiv.appendChild(img);
+                    frameDiv.appendChild(caption);
                     pageDiv.appendChild(frameDiv);
                 });
 
@@ -396,57 +830,66 @@
             }
         }
 
-        // --- GESTIONE LIGHTBOX (Visualizzazione, Eliminazione, Modifica) ---
+        // --- GESTIONE LIGHTBOX ---
         const lightbox = document.getElementById('lightbox');
         const flipContainer = document.getElementById('flipContainer');
-        let currentActivePhoto = null; // Memorizza la foto aperta
+        let currentActivePhoto = null; 
 
         function openLightbox(photo) {
             currentActivePhoto = photo;
             
-            document.getElementById('lightboxImg').src = photo.image;
+            const imgElement = document.getElementById('lightboxImg');
+            if(photo.imageBlob) {
+                imgElement.src = URL.createObjectURL(photo.imageBlob);
+            } else if (photo.image) {
+                imgElement.src = photo.image;
+            }
+
             document.getElementById('lightboxDate').innerText = formatDisplayDate(photo);
             document.getElementById('lightboxPlace').innerText = photo.place || '';
             
-            toggleEditMode(false); // Assicurati di non essere in modalità modifica
+            toggleEditMode(false); 
             flipContainer.classList.remove('flipped');
+            
             lightbox.style.display = 'flex';
+            setTimeout(() => lightbox.style.opacity = '1', 10);
         }
 
-        document.getElementById('closeLightbox').onclick = () => { lightbox.style.display = 'none'; };
+        document.getElementById('closeLightbox').onclick = () => { 
+            lightbox.style.opacity = '0';
+            setTimeout(() => lightbox.style.display = 'none', 300); 
+        };
 
-        // Swipe handler
         let touchstartX = 0;
         let touchendX = 0;
 
         flipContainer.addEventListener('touchstart', e => { touchstartX = e.changedTouches[0].screenX; });
         flipContainer.addEventListener('touchend', e => {
             touchendX = e.changedTouches[0].screenX;
-            // Evita di girare la foto se stai scorrendo tra gli input di testo nella modalità modifica
             if (e.target.tagName !== 'INPUT' && Math.abs(touchendX - touchstartX) > 40) {
                 flipContainer.classList.toggle('flipped');
             }
         });
 
-        // Elimina Foto
         function deleteCurrentPhoto() {
             if(confirm("Sei sicuro di voler eliminare questo ricordo?")) {
                 const transaction = db.transaction(["photos"], "readwrite");
                 transaction.objectStore("photos").delete(currentActivePhoto.id);
                 transaction.oncomplete = () => {
-                    lightbox.style.display = 'none';
-                    loadAlbum();
+                    lightbox.style.opacity = '0';
+                    setTimeout(() => {
+                        lightbox.style.display = 'none';
+                        loadPhotosForAlbum(currentAlbumId);
+                    }, 300);
                 };
             }
         }
 
-        // Modifica Dati Foto
         function toggleEditMode(isEditing) {
             if (isEditing) {
                 document.getElementById('backDisplay').style.display = 'none';
                 document.getElementById('backEdit').style.display = 'flex';
                 
-                // Pre-compila campi
                 document.getElementById('editYear').value = currentActivePhoto.year || '';
                 document.getElementById('editMonth').value = currentActivePhoto.month || '';
                 document.getElementById('editDay').value = currentActivePhoto.day || '';
@@ -468,7 +911,6 @@
             const sortMonth = newMonth ? newMonth.padStart(2, '0') : "01";
             const sortDay = newDay ? newDay.padStart(2, '0') : "01";
             
-            // Aggiorna oggetto
             currentActivePhoto.year = newYear;
             currentActivePhoto.month = newMonth;
             currentActivePhoto.day = newDay;
@@ -479,11 +921,14 @@
             transaction.objectStore("photos").put(currentActivePhoto);
 
             transaction.oncomplete = () => {
-                // Aggiorna UI del retro
                 document.getElementById('lightboxDate').innerText = formatDisplayDate(currentActivePhoto);
                 document.getElementById('lightboxPlace').innerText = currentActivePhoto.place || '';
                 toggleEditMode(false);
-                loadAlbum(); // Ricarica sfondo nel caso sia cambiato l'ordine
+                loadPhotosForAlbum(currentAlbumId);
+                
+                if(navigator.serviceWorker.controller) {
+                    navigator.serviceWorker.controller.postMessage({action: 'checkAnniversaries'});
+                }
             };
         }
     </script>
